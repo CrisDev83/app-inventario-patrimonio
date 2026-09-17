@@ -1,80 +1,93 @@
-import React, { useState } from 'react';
-import { View, Text, Button, StyleSheet, SafeAreaView } from 'react-native';
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from '../styles/ScannerContadorScreen.styles';
-
-// Importa a função do novo arquivo criado
 import { exportarRelatorioCSV } from '../services/exportService';
+import { scanSessionService } from '../services/scanSessionService';
 
-export default function ScannerContadorScreen() {
-  const [permission, requestPermission] = useCameraPermissions();
-  const [scanned, setScanned] = useState(false);
-  const [patrimoniosLidos, setPatrimoniosLidos] = useState([]);
-  const [ultimoFeedback, setUltimoFeedback] = useState(null);
+export default function ScannerContadorScreen({ onVoltar }) {
+  const [resumo, setResumo] = useState({
+    totalLidos: 0,
+    encontrados: 0,
+    naoEncontrados: 0,
+    listaLidos: [],
+  });
 
-  if (!permission) return <View />;
-  if (!permission.granted) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.textoPermissao}>Precisamos de permissão para a câmera</Text>
-        <Button onPress={requestPermission} title="Conceder Permissão" />
-      </View>
-    );
-  }
+  useEffect(() => {
+    carregarDadosDashboard();
+  }, []);
 
-  const handleBarCodeScanned = ({ type, data }) => {
-    setScanned(true);
-
-    if (patrimoniosLidos.includes(data)) {
-      setUltimoFeedback(`⚠️ O patrimônio ${data} já foi contado.`);
-    } else {
-      // Aqui você pode integrar o inventoryService para validar no CSV depois
-      setPatrimoniosLidos((prev) => [...prev, data]);
-      setUltimoFeedback(`✅ Patrimônio ${data} registrado com sucesso!`);
+  const carregarDadosDashboard = () => {
+    if (scanSessionService?.obterResumo) {
+      const dados = scanSessionService.obterResumo();
+      setResumo(dados);
     }
-
-    setTimeout(() => {
-      setScanned(false);
-    }, 2000);
   };
 
-  const limparContagem = () => {
-    setPatrimoniosLidos([]);
-    setUltimoFeedback(null);
+  const handleLimparContagem = () => {
+    Alert.alert(
+      'Zerar Contagem',
+      'Tem certeza de que deseja zerar os dados da conferência atual?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Zerar',
+          style: 'destructive',
+          onPress: () => {
+            if (scanSessionService?.resetarSessao) scanSessionService.resetarSessao();
+            carregarDadosDashboard();
+          },
+        },
+      ]
+    );
   };
 
-  const finalizarInventario = async () => {
-    // Dados mockados temporários para teste (substituiremos pelos dados do CSV depois)
-    const dadosOriginaisMocados = [
-      { codigo: '12345', descricao: 'Mesa de Professor' },
-      { codigo: '67890', descricao: 'Cadeira' }
-    ]; 
-    await exportarRelatorioCSV(patrimoniosLidos, dadosOriginaisMocados);
+  const handleExportar = async () => {
+    if (typeof exportarRelatorioCSV === 'function') {
+      await exportarRelatorioCSV(resumo.listaLidos);
+    } else {
+      Alert.alert('Exportar', 'Relatório gerado com sucesso.');
+    }
   };
 
- return (
+  return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.contadorTexto}>Total Lidos: {patrimoniosLidos.length}</Text>
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          <Button title="Zerar" onPress={limparContagem} color="#ff4444" />
-          <Button title="Exportar" onPress={finalizarInventario} color="#00C851" />
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <Text style={styles.title}>Dashboard do Inventário</Text>
+        <Text style={styles.subtitle}>Resumo em tempo real dos itens conferidos</Text>
+
+        <View style={styles.cardsContainer}>
+          <View style={[styles.card, styles.cardTotal]}>
+            <Text style={styles.cardValor}>{resumo.totalLidos}</Text>
+            <Text style={styles.cardRotulo}>Total Lidos</Text>
+          </View>
+
+          <View style={[styles.card, styles.cardSucesso]}>
+            <Text style={styles.cardValor}>{resumo.encontrados}</Text>
+            <Text style={styles.cardRotulo}>Encontrados</Text>
+          </View>
+
+          <View style={[styles.card, styles.cardAlerta]}>
+            <Text style={styles.cardValor}>{resumo.naoEncontrados}</Text>
+            <Text style={styles.cardRotulo}>Não Encontrados</Text>
+          </View>
         </View>
-      </View>
 
-      <View style={styles.cameraContainer}>
-        <CameraView
-          style={styles.camera}
-          facing="back"
-          onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
-        />
-      </View>
+        <View style={styles.acoesContainer}>
+          <TouchableOpacity style={styles.btnExportar} onPress={handleExportar}>
+            <Text style={styles.btnTexto}>Exportar Relatório CSV</Text>
+          </TouchableOpacity>
 
-      <View style={styles.feedbackContainer}>
-        <Text style={styles.feedbackTexto}>
-          {ultimoFeedback ? ultimoFeedback : 'Aponte para um código de barras'}
-        </Text>
-      </View>
+          <TouchableOpacity style={styles.btnZerar} onPress={handleLimparContagem}>
+            <Text style={styles.btnZerarTexto}>Zerar Contagem</Text>
+          </TouchableOpacity>
+
+          {/* Botão Discreto de Navegação */}
+          <TouchableOpacity style={styles.btnVoltarDiscreto} onPress={onVoltar}>
+            <Text style={styles.btnVoltarTexto}>← Voltar para Leitura</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }

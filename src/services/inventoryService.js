@@ -5,9 +5,6 @@ import { Asset } from 'expo-asset';
 import csvFileModule from '../data/inventory.csv';
 const CUSTOM_CSV_PATH = `${FileSystem.documentDirectory}custom_inventory.csv`;
 
-/**
- * Salva o arquivo selecionado pelo usuário no armazenamento interno.
- */
 export const salvarCSVImportado = async (uriOriginal) => {
   try {
     const conteudoContent = await FileSystem.readAsStringAsync(uriOriginal);
@@ -19,22 +16,16 @@ export const salvarCSVImportado = async (uriOriginal) => {
   }
 };
 
-/**
- * Normaliza textos removendo acentos, espaços, aspas e caracteres ocultos (BOM UTF-8)
- */
 const normalizarTexto = (texto) =>
   texto
     ? texto
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '') // Remove acentos
-        .replace(/[^a-zA-Z0-9]/g, '')    // Remove caracteres invisíveis (BOM) e símbolos
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9]/g, '')
         .toLowerCase()
         .trim()
     : '';
 
-/**
- * Carrega o texto do arquivo CSV e busca pelo código do patrimônio.
- */
 export const verificarPatrimonioCSV = async (codigoLido) => {
   try {
     let csvContent = '';
@@ -56,7 +47,6 @@ export const verificarPatrimonioCSV = async (codigoLido) => {
 
     const codigoBuscado = String(codigoLido || '').trim();
 
-    // Busca flexível e imune a caracteres oculta/BOM
     const itemEncontrado = parsedData.data.find((row) => {
       const chaveCodigo = Object.keys(row).find((key) => {
         const keyNormalizada = normalizarTexto(key);
@@ -68,27 +58,19 @@ export const verificarPatrimonioCSV = async (codigoLido) => {
       return String(row[chaveCodigo]).trim() === codigoBuscado;
     });
 
-    // --- DIAGNÓSTICO DO CSV ---
-    console.log('--- DIAGNÓSTICO DO CSV ---');
-    console.log('Arquivo personalizado existe?', fileInfo.exists);
-    console.log('Total de linhas lidas:', parsedData.data.length);
-    console.log('Estrutura da 1ª linha:', parsedData.data[0]);
-    console.log('Código procurado:', codigoBuscado);
-    console.log('Patrimônio encontrado?', itemEncontrado ? 'SIM ✅' : 'NÃO ❌');
-    // --------------------------
-
     if (itemEncontrado) {
       const chaveDescricao = Object.keys(itemEncontrado).find((key) => {
         const keyNormalizada = normalizarTexto(key);
         return keyNormalizada.includes('desc') || keyNormalizada.includes('item');
       });
 
-      const descricao = chaveDescricao ? itemEncontrado[chaveDescricao] : 'Sem descrição disponível';
+      const descricao = chaveDescricao ? itemEncontrado[chaveDescricao] : 'Sem descrição';
 
       return {
         encontrado: true,
         titulo: 'Patrimônio Encontrado! ✅',
         mensagem: `Descrição: ${descricao}`,
+        descricao: descricao,
       };
     }
 
@@ -96,6 +78,7 @@ export const verificarPatrimonioCSV = async (codigoLido) => {
       encontrado: false,
       titulo: 'Patrimônio Não Encontrado! ⚠️',
       mensagem: 'O código escaneado não consta no arquivo CSV.',
+      descricao: 'Item não cadastrado',
     };
   } catch (error) {
     console.error('Erro ao ler o arquivo CSV:', error);
@@ -103,6 +86,7 @@ export const verificarPatrimonioCSV = async (codigoLido) => {
       encontrado: false,
       titulo: 'Erro na Leitura ❌',
       mensagem: 'Não foi possível carregar a base de dados do CSV.',
+      descricao: 'Erro de leitura',
     };
   }
 };

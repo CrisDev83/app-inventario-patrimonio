@@ -5,6 +5,24 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F7FA',
   },
+  // Estilos da Splash (Tela de Abertura)
+  splashContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  splashLogo: {
+    width: 220,
+    height: 100,
+    marginBottom: 20,
+  },
+  splashTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#003366',
+  },
+  // Estilos da Navegação
   navBar: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
