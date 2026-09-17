@@ -26,6 +26,31 @@ const normalizarTexto = (texto) =>
         .trim()
     : '';
 
+export const obterTotalItensBase = async () => {
+  try {
+    let csvContent = '';
+    const fileInfo = await FileSystem.getInfoAsync(CUSTOM_CSV_PATH);
+
+    if (fileInfo.exists) {
+      csvContent = await FileSystem.readAsStringAsync(CUSTOM_CSV_PATH);
+    } else {
+      const asset = Asset.fromModule(csvFileModule);
+      await asset.downloadAsync();
+      csvContent = await FileSystem.readAsStringAsync(asset.localUri || asset.uri);
+    }
+
+    const parsedData = Papa.parse(csvContent, {
+      header: true,
+      skipEmptyLines: true,
+    });
+
+    return parsedData.data ? parsedData.data.length : 0;
+  } catch (error) {
+    console.error('Erro ao contar itens do CSV:', error);
+    return 0;
+  }
+};
+
 export const verificarPatrimonioCSV = async (codigoLido) => {
   try {
     let csvContent = '';

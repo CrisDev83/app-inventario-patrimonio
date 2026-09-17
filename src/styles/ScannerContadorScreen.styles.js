@@ -35,6 +35,9 @@ export const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  cardBase: {
+    backgroundColor: '#6366F1',
+  },
   cardTotal: {
     backgroundColor: '#2563EB',
   },

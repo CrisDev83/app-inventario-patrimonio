@@ -13,15 +13,11 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   splashLogo: {
-    width: 220,
-    height: 100,
-    marginBottom: 20,
+    width: '100%',
+    height: '80%',
+   
   },
-  splashTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#003366',
-  },
+
   // Estilos da Navegação
   navBar: {
     flexDirection: 'row',

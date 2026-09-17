@@ -27,7 +27,7 @@ export default function App() {
           style={styles.splashLogo}
           resizeMode="contain"
         />
-        <Text style={styles.splashTitle}>Inventário - Sec. Educação</Text>
+       
       </View>
     );
   }

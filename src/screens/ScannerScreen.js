@@ -38,6 +38,26 @@ export default function ScannerScreen({ onEncerrar }) {
     processandoLeitura.current = true;
 
     setLendo(false);
+
+    // 1. Trava de segurança: avisa e impede contabilizar código repetido
+    if (scanSessionService?.jaFoiLido && scanSessionService.jaFoiLido(data)) {
+      Alert.alert(
+        'Código Já Lido ⚠️',
+        `O código "${data}" já foi bipado nesta sessão e não será contabilizado novamente.`,
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              processandoLeitura.current = false;
+            },
+          },
+        ],
+        { cancelable: false }
+      );
+      return;
+    }
+
+    // 2. Se for um código novo, faz a busca no CSV
     setCarregando(true);
 
     setTimeout(async () => {

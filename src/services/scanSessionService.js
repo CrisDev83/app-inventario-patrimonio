@@ -1,9 +1,22 @@
 let leiturasAtivas = [];
 
 export const scanSessionService = {
+  // Verifica se o código já foi lido na sessão atual
+  jaFoiLido: (codigo) => {
+    if (!codigo) return false;
+    const codigoBuscado = String(codigo).trim();
+    return leiturasAtivas.some((item) => String(item.codigo).trim() === codigoBuscado);
+  },
+
   adicionarLeitura: (codigo, encontrado = false, descricao = 'Sem descrição') => {
     if (codigo) {
-      leiturasAtivas.push({ codigo, encontrado, descricao });
+      const codigoFormatado = String(codigo).trim();
+      const jaExiste = leiturasAtivas.some((item) => String(item.codigo).trim() === codigoFormatado);
+
+      // Só adiciona se ainda não existir na lista
+      if (!jaExiste) {
+        leiturasAtivas.push({ codigo: codigoFormatado, encontrado, descricao });
+      }
     }
   },
 

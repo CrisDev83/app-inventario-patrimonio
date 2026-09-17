@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from '../styles/ScannerContadorScreen.styles';
 import { exportarRelatorioCSV } from '../services/exportService';
 import { scanSessionService } from '../services/scanSessionService';
+import { obterTotalItensBase } from '../services/inventoryService';
 
 export default function ScannerContadorScreen({ onVoltar }) {
   const [resumo, setResumo] = useState({
@@ -12,16 +13,19 @@ export default function ScannerContadorScreen({ onVoltar }) {
     naoEncontrados: 0,
     listaLidos: [],
   });
+  const [totalBase, setTotalBase] = useState(0);
 
   useEffect(() => {
     carregarDadosDashboard();
   }, []);
 
-  const carregarDadosDashboard = () => {
+  const carregarDadosDashboard = async () => {
     if (scanSessionService?.obterResumo) {
       const dados = scanSessionService.obterResumo();
       setResumo(dados);
     }
+    const total = await obterTotalItensBase();
+    setTotalBase(total);
   };
 
   const handleLimparContagem = () => {
@@ -57,6 +61,12 @@ export default function ScannerContadorScreen({ onVoltar }) {
         <Text style={styles.subtitle}>Resumo em tempo real dos itens conferidos</Text>
 
         <View style={styles.cardsContainer}>
+          {/* Card: Total de Itens no CSV Base */}
+          <View style={[styles.card, { backgroundColor: '#6366F1' }]}>
+            <Text style={styles.cardValor}>{totalBase}</Text>
+            <Text style={styles.cardRotulo}>Total na Base</Text>
+          </View>
+
           <View style={[styles.card, styles.cardTotal]}>
             <Text style={styles.cardValor}>{resumo.totalLidos}</Text>
             <Text style={styles.cardRotulo}>Total Lidos</Text>
