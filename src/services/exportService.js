@@ -15,11 +15,17 @@ export const exportarRelatorioCSV = async (listaLidos = []) => {
     let csvContent = '\uFEFFCodigo;Descricao;Status\n';
 
     itens.forEach((item) => {
-      const codigo = typeof item === 'object' ? item?.codigo : item;
-      const descricao = typeof item === 'object' ? (item?.descricao || 'Sem descrição') : 'Sem descrição';
-      const status = typeof item === 'object' && item?.encontrado ? 'Encontrado' : 'Não Encontrado';
-      
-      csvContent += `"${codigo || ''}";"${descricao}";"${status}"\n`;
+      const codigoRaw = typeof item === 'object' ? item?.codigo : item;
+      const descricaoRaw = typeof item === 'object' ? (item?.descricao || 'Sem descrição') : 'Sem descrição';
+      const statusRaw = typeof item === 'object' && item?.encontrado ? 'Encontrado' : 'Não Encontrado';
+
+      // 1. Duplica as aspas internas (") -> ("") para não quebrar as colunas no Excel
+      // 2. Substitui quebras de linha por espaço para manter o item numa única linha
+      const codigo = String(codigoRaw || '').replace(/"/g, '""');
+      const descricao = String(descricaoRaw || '').replace(/"/g, '""').replace(/[\r\n]+/g, ' ');
+      const status = String(statusRaw || '').replace(/"/g, '""');
+
+      csvContent += `"${codigo}";"${descricao}";"${status}"\n`;
     });
 
     const filePath = `${FileSystem.documentDirectory}relatorio_inventario.csv`;

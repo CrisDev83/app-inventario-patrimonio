@@ -7,8 +7,15 @@ const CUSTOM_CSV_PATH = `${FileSystem.documentDirectory}custom_inventory.csv`;
 
 export const salvarCSVImportado = async (uriOriginal) => {
   try {
-    const conteudoContent = await FileSystem.readAsStringAsync(uriOriginal);
-    await FileSystem.writeAsStringAsync(CUSTOM_CSV_PATH, conteudoContent);
+    const fileInfo = await FileSystem.getInfoAsync(CUSTOM_CSV_PATH);
+    if (fileInfo.exists) {
+      await FileSystem.deleteAsync(CUSTOM_CSV_PATH, { idempotent: true });
+    }
+
+    await FileSystem.copyAsync({
+      from: uriOriginal,
+      to: CUSTOM_CSV_PATH,
+    });
     return true;
   } catch (error) {
     console.error('Erro ao salvar CSV importado:', error);
@@ -25,6 +32,13 @@ const normalizarTexto = (texto) =>
         .toLowerCase()
         .trim()
     : '';
+
+const normalizarCodigo = (codigo) => {
+  if (codigo === undefined || codigo === null) return '';
+  const limpo = String(codigo).trim().replace(/^0+/, '');
+  return limpo === '' ? '0' : limpo;
+};
+
 
 export const obterTotalItensBase = async () => {
   try {
@@ -70,7 +84,7 @@ export const verificarPatrimonioCSV = async (codigoLido) => {
       skipEmptyLines: true,
     });
 
-    const codigoBuscado = String(codigoLido || '').trim();
+    const codigoBuscado = normalizarCodigo(codigoLido);
 
     const itemEncontrado = parsedData.data.find((row) => {
       const chaveCodigo = Object.keys(row).find((key) => {
@@ -80,7 +94,7 @@ export const verificarPatrimonioCSV = async (codigoLido) => {
 
       if (!chaveCodigo || row[chaveCodigo] === undefined) return false;
 
-      return String(row[chaveCodigo]).trim() === codigoBuscado;
+      return normalizarCodigo(row[chaveCodigo]) === codigoBuscado;
     });
 
     if (itemEncontrado) {
